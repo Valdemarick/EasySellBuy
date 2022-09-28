@@ -1,0 +1,71 @@
+{
+	"GlobalConfiguration": {
+		"BaseUrl": "http://localhost:5132"
+	},
+	"Routes": [
+		{
+			"UpstreamPathTemplate": "/easysellbuy/orders",
+			"UpstreamHttpMethod": [ "Get", "Post", "Put" ],
+			"DownstreamPathTemplate": "/api/orders",
+			"DownstreamScheme": "http",
+			"DownstreamHostAndPorts": [
+				{
+					"Host": "localhost",
+					"Port": 5128
+				}
+			],
+			"AuthenticationOptions": {
+				"AuthenticationProviderKey": "IdentityApiKey",
+				"AllowedScopes": [ "Bag.WebApi" ]
+			}
+		},
+		{
+			"UpstreamPathTemplate": "/easysellbuy/orders/{id}",
+			"UpstreamHttpMethod": [ "Get", "Delete" ],
+			"DownstreamPathTemplate": "/api/orders/{id}",
+			"DownstreamScheme": "http",
+			"DownstreamHostAndPorts": [
+				{
+					"Host": "localhost",
+					"Port": 5128
+				}
+			],
+			"AuthenticationOptions": {
+				"AuthenticationProviderKey": "IdentityApiKey",
+				"AllowedScopes": [ "Bag.WebApi" ]
+			}
+		},
+		{
+			"UpstreamPathTemplate": "/easysellbuy/ads",
+			"UpstreamHttpMethod": [ "Get", "Post", "Put" ],
+			"DownstreamPathTemplate": "/api/ads",
+			"DownstreamScheme": "http",
+			"DownstreamHostAndPorts": [
+				{
+					"Host": "localhost",
+					"Port": 5284
+				}
+			],
+			"AuthenticationOptions": {
+				"AuthenticationProviderKey": "IdentityApiKey",
+				"AllowedScopes": [ "Ad.WebApi" ]
+			}
+		},
+		{
+			"UpstreamPathTemplate": "/easysellbuy/ads/{id}",
+			"UpstreamHttpMethod": [ "Get", "Delete" ],
+			"DownstreamPathTemplate": "/api/ads/{id}",
+			"DownstreamScheme": "http",
+			"DownstreamHostAndPorts": [
+				{
+					"Host": "localhost",
+					"Port": 5284
+				}
+			],
+			"AuthenticationOptions": {
+				"AuthenticationProviderKey": "IdentityApiKey",
+				"AllowedScopes": [ "Ad.WebApi" ]
+			}
+		}
+	]
+}

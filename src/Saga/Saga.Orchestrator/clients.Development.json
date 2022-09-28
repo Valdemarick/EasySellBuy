@@ -1,0 +1,10 @@
+{
+	"AdClient": {
+		"Name": "Ad",
+		"Url": "http://host.docker.internal:5284"
+	},
+	"BagClient": {
+		"Name": "Bag",
+		"Url": "http://host.docker.internal:5128"
+	}
+}

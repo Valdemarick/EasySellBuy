@@ -1,0 +1,101 @@
+version: '3.4'
+
+services:
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.1
+
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:7.16.1
+    depends_on:
+      - elasticsearch
+
+  identitydb:
+    container_name: identitydb
+    image: mcr.microsoft.com/mssql/server:2019-latest
+
+  postgresdb:
+    container_name: postgresdb
+    image: postgres:15beta2-bullseye
+
+  cassandra:
+    container_name: cassandra
+    image: cassandra:4.0
+
+  ad.webapi:
+    container_name: ad.webapi
+    image: ${DOCKER_REGISTRY-}adwebapi
+    build:
+      context: .
+      dockerfile: Services/Ad/Ad.WebApi/Dockerfile
+    depends_on:
+     - postgresdb
+     - broker
+
+  bag.webapi:
+    container_name: bag.webapi
+    image: ${DOCKER_REGISTRY-}bagwebapi
+    build:
+      context: .
+      dockerfile: Services/Bag/Bag.WebApi/Dockerfile
+    depends_on:
+     - postgresdb
+     - identity.webapi
+     - broker
+
+  bag.webapi-2:
+    container_name: bag.webapi-2
+    image: ${DOCKER_REGISTRY-}bagwebapi
+    build:
+      context: .
+      dockerfile: Services/Bag/Bag.WebApi/Dockerfile
+    depends_on:
+     - postgresdb
+     - identity.webapi
+     - broker
+
+  identity.webapi:
+    container_name: identity.webapi
+    image: ${DOCKER_REGISTRY-}identitywebapi
+    build:
+      context: .
+      dockerfile: Services/Identity/Identity.WebApi/Dockerfile
+    depends_on:
+     - identitydb
+
+  ocelot.webapi:
+    container_name: ocelot.webapi
+    image: ${DOCKER_REGISTRY-}ocelotwebapi
+    build:
+      context: .
+      dockerfile: ApiGateways\Ocelot\OcelotApiGateway\Dockerfile
+    depends_on:
+     - bag.webapi
+     - ad.webapi
+
+  saga:
+    container_name: saga
+    image: ${DOCKER_REGISTRY-}saga
+    build:
+      context: .
+      dockerfile: Saga/Saga.Orchestrator/Dockerfile
+    
+  zookeeper:
+    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:7.0.0
+
+  broker:
+    container_name: broker
+    image: confluentinc/cp-kafka:7.0.0
+    depends_on:
+      - zookeeper
+
+  kafka-init:
+    container_name: kafka-init
+    image: confluentinc/cp-kafka:7.0.0
+    depends_on:
+     - broker
+
+  cache:
+    image: redis:6.2-alpine

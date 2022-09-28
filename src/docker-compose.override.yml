@@ -1,0 +1,189 @@
+version: '3.4'
+
+services:
+  elasticsearch:
+    ports:
+      - 9200:9200
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    environment:
+      - xpack.monitoring.enabled=true
+      - xpack.watcher.enabled=false
+      - xpack.ml.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
+    networks:
+      - easysellbuy
+
+  kibana:
+    ports:
+      - 5601:5601
+    environment:
+      - ELASTICSEARCH_URL=http://localhost:9200
+    networks:
+      - easysellbuy
+
+  identitydb:
+    ports:
+     - "1500:1433"
+    volumes:
+     - restate-sql-server:/var/opt/mssql
+    environment:
+     - "ACCEPT_EULA=Y"
+     - "MSSQL_SA_PASSWORD=Sa123.sa123"
+    networks:
+     - easysellbuy
+
+  postgresdb:
+    restart: always
+    ports:
+     - 5432:5432
+    environment:
+     - POSTGRES_USER=postgres
+     - POSTGRES_PASSWORD=123
+     - POSTGRES_MULTIPLE_DATABASES=Ad,Bag
+    volumes:
+     - restate-posgres-ad:/var/lib/postgresql/data
+    networks:
+     - easysellbuy
+
+  cassandra:
+    ports:
+      - 9042:9042
+    volumes:
+      - ~/apps/cassandra:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=citizixs
+
+  ad.webapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal,5432; Database=Ad; Port=5432; User Id=postgres; Password=123
+    ports:
+      - "5284:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    networks:
+     - easysellbuy
+
+  bag.webapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal,5432; Database=Bag; Port=5432; User Id=postgres; Password=123
+    ports:
+      - "5128:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    networks:
+     - easysellbuy
+
+  bag.webapi-2:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal,5432; Database=Bag; Port=5432; User Id=postgres; Password=123
+    ports:
+      - "5129:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    networks:
+     - easysellbuy
+
+  identity.webapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=host.docker.internal,1433;Database=Identity;User ID=sa;Password=Sa123.sa123;
+    ports:
+      - "5140:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    networks:
+     - easysellbuy
+
+  ocelot.webapi:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "5132:80"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+    networks: 
+     - easysellbuy
+
+  saga:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+      - "5153:80"
+    networks:
+      - easysellbuy
+
+  zookeeper:
+    hostname: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks: 
+     - easysellbuy
+
+  broker:
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://broker:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    networks:
+     - easysellbuy
+
+  kafka-init:
+    hostname: kafka-init
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      kafka-topics --bootstrap-server broker:29092 --list
+
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server broker:29092 --create --if-not-exists --topic Orders --replication-factor 1 --partitions 1
+
+      echo -e 'Successfully created the following topic:'
+      kafka-topics --bootstrap-server broker:29092 --list
+      "
+    networks:
+     - easysellbuy
+
+  cache:
+    restart: always
+    ports:
+      - 6379:6379
+    command: redis-server --save 20 1 --loglevel warning 
+    volumes: 
+      - cache:/data
+
+networks:
+   easysellbuy:
+     driver: bridge
+
+volumes:
+  elasticsearch-data:
+  restate-sql-server:
+    external: false
+  restate-posgres-ad:
+    external: false
+  restate-posgres-bag:
+    external: false
+  cache:

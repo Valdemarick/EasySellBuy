@@ -1,0 +1,12 @@
+{
+	{
+		"AdClient": {
+			"Name": "Ad",
+			"Url": "http://locahost:5284"
+		},
+		"BagClient": {
+			"Name": "Bag",
+			"Url": "http://localhost:5128"
+		}
+	}
+}
